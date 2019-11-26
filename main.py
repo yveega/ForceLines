@@ -12,6 +12,9 @@ points = []
 LINES = 8
 GRID_SPACE = 25
 
+buffer = dict()
+tool = 'line'
+
 
 def dekahex2(n):
     n = round(n)
@@ -43,12 +46,6 @@ def askquestion(title, question):
     return res
 
 
-def add_point(event):
-    x, y = event.x, event.y
-    print(x, y)
-    QPoint(x, y)
-
-
 def draw_line(x, y):
     x1, y1 = x, y
     while True:
@@ -62,7 +59,7 @@ def draw_line(x, y):
         x_shift = 0
         y_shift = 0
         for i in points:
-            x_plus, y_plus = i.forse(x1, y1)
+            x_plus, y_plus = i.force(x1, y1)
             x_shift += x_plus
             y_shift += y_plus
         module = math.sqrt(x_shift ** 2 + y_shift ** 2)
@@ -80,6 +77,18 @@ def draw_line(x, y):
     c.itemconfig(im, image=photo_im)
 
 
+def click(event):
+    global tool
+    if tool == 'point':
+        QPoint(event.x, event.y)
+    elif tool == 'line':
+        buffer['x1'], buffer['y1'] = event.x, event.y
+        tool = 'line_wait'
+    elif tool == 'line_wait':
+        tool = 'line'
+        QLine(buffer['x1'], buffer['y1'], event.x, event.y)
+
+
 class QPoint:
     def __init__(self, x, y):
         self.x = x
@@ -89,18 +98,28 @@ class QPoint:
         global photo_im
         photo_im = ImageTk.PhotoImage(img)
         c.itemconfig(im, image=photo_im)
-        askquestion('Ввод данных', 'Введите заряд точки')
-        self.q = int(res)
-        draw.ellipse([x - R_POINT, y - R_POINT, x + R_POINT, y + R_POINT],
-                     (random.randint(0, 7) * 32, random.randint(0, 7) * 32, random.randint(0, 7) * 32))
+        self.q = askquestion('Ввод данных', 'Введите заряд точки')
         points.append(self)
 
     def distance(self, x, y):
         return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
 
-    def forse(self, x, y):
+    def force(self, x, y):
         dist = self.distance(x, y) ** 3
         return (x - self.x) * self.q / dist, (y - self.y) * self.q / dist
+
+
+class QLine:
+    def __init__(self, x1, y1, x2, y2):
+        self.x1 = x1
+        self.y1 = y1
+        self.x2 = x2
+        self.y2 = y2
+        draw.line([x1, y1, x2, y2], (random.randint(0, 5) * 32, random.randint(0, 5) * 32, random.randint(0, 5) * 32), 5)
+        global photo_im
+        photo_im = ImageTk.PhotoImage(img)
+        c.itemconfig(im, image=photo_im)
+        self.q = askquestion('Ввод данных', 'Введите заряд линии')
 
 
 def draw_from_plus():
@@ -129,7 +148,7 @@ photo_im = ImageTk.PhotoImage(img)
 b_draw = Button(main, text='Draw', width=15, height=2, font=FONT,
                 command=draw_from_plus)
 c = Canvas(main, width=W, height=H)
-c.bind('<Button-1>', add_point)
+c.bind('<Button-1>', click)
 im = c.create_image(0, 0, image=photo_im, anchor=NW)
 b_draw.pack()
 c.pack()

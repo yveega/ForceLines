@@ -16,7 +16,6 @@ def force(x, y):
 def draw_line(x0, y0):
     x1, y1 = x0, y0
     while True:
-        print(x1, y1)
         x_shift, y_shift = force(x1, y1)
         module = math.sqrt(x_shift ** 2 + y_shift ** 2)
         x_shift *= STEP / module
