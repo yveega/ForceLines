@@ -13,7 +13,7 @@ LINES = 8
 GRID_SPACE = 25
 
 buffer = dict()
-tool = 'line'
+tool = 'point'
 
 
 def dekahex2(n):
@@ -98,7 +98,7 @@ class QPoint:
         global photo_im
         photo_im = ImageTk.PhotoImage(img)
         c.itemconfig(im, image=photo_im)
-        self.q = askquestion('Ввод данных', 'Введите заряд точки')
+        self.q = int(askquestion('Ввод данных', 'Введите заряд точки'))
         points.append(self)
 
     def distance(self, x, y):
@@ -119,7 +119,7 @@ class QLine:
         global photo_im
         photo_im = ImageTk.PhotoImage(img)
         c.itemconfig(im, image=photo_im)
-        self.q = askquestion('Ввод данных', 'Введите заряд линии')
+        self.q = int(askquestion('Ввод данных', 'Введите заряд линии'))
 
 
 def draw_from_plus():
