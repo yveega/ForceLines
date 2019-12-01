@@ -9,8 +9,11 @@ FONT = ('Comic Sans', 14, 'bold')
 R_POINT = 10
 W, H = 1000, 1000
 points = []
-LINES = 8
+lines = []
+LINES_FROM_POINT = 10
 GRID_SPACE = 25
+
+EPS = 0.0000001
 
 buffer = dict()
 tool = 'line'
@@ -54,11 +57,20 @@ def draw_line(x, y):
             if i.distance(x1, y1) < STEP:
                 end = True
                 break
+        for i in lines:
+            if i.distance(x1, y1) < STEP / 2 and \
+                    min(i.x1, i.x2) - STEP < x1 < max(i.x1, i.x2) + STEP:
+                end = True
+                break
         if end:
             break
         x_shift = 0
         y_shift = 0
         for i in points:
+            x_plus, y_plus = i.force(x1, y1)
+            x_shift += x_plus
+            y_shift += y_plus
+        for i in lines:
             x_plus, y_plus = i.force(x1, y1)
             x_shift += x_plus
             y_shift += y_plus
@@ -115,22 +127,61 @@ class QLine:
         self.y1 = y1
         self.x2 = x2
         self.y2 = y2
+        self.line_a = y2 - y1
+        self.line_b = x1 - x2
+        self.line_c = -(self.line_a * x1 + self.line_b * y1)
+        self.length = math.sqrt(self.line_a ** 2 + self.line_b ** 2)
+        self.normal_x = self.line_a * R_POINT / self.length
+        self.normal_y = self.line_b * R_POINT / self.length
         draw.line([x1, y1, x2, y2], (random.randint(0, 5) * 32, random.randint(0, 5) * 32, random.randint(0, 5) * 32), 5)
         global photo_im
         photo_im = ImageTk.PhotoImage(img)
         c.itemconfig(im, image=photo_im)
-        self.q = askquestion('Ввод данных', 'Введите заряд линии')
+        self.q = int(askquestion('Ввод данных', 'Введите заряд линии'))
+        lines.append(self)
+
+    def distance(self, x, y):
+        k = math.sqrt(self.line_a ** 2 + self.line_b ** 2)
+        return abs(self.line_a * x + self.line_b * y + self.line_c) / k
+
+    def force(self, x, y):
+        module1 = math.sqrt((x - self.x1) ** 2 + (y - self.y1) ** 2)
+        module2 = math.sqrt((x - self.x2) ** 2 + (y - self.y2) ** 2)
+        bis_b = -((x - self.x1) / module1 + (x - self.x2) / module2)
+        bis_a = (y - self.y1) / module1 + (y - self.y2) / module2
+        bis_c = - (bis_a * x + bis_b * y)
+        k = bis_a * self.line_b - bis_b * self.line_a
+        if abs(k) < EPS:
+            gx = math.sqrt((self.x1 ** 2 + self.x2 ** 2) / 2)
+            gy = math.sqrt((self.y1 ** 2 + self.y2 ** 2) / 2)
+        else:
+            gx = -(bis_c * self.line_b - bis_b * self.line_c) / k
+            gy = -(bis_a * self.line_c - bis_c * self.line_a) / k
+        # draw.ellipse([gx - 5, gy - 5, gx + 5, gy + 5], (255, 0, 0))
+        # draw.line([x, y, gx, gy], (0, 255, 0))
+        dist = math.sqrt((x - gx) ** 2 + (y - gy) ** 2) ** 3
+        return (x - gx) * self.q / dist, (y - gy) * self.q / dist
 
 
 def draw_from_plus():
     for p in points:
-        if p.q < 0:
+        if p.q <= 0:
             continue
-        for i in range(LINES):
-            angle = math.pi * 2 / LINES
+        for i in range(LINES_FROM_POINT):
+            angle = math.pi * 2 / LINES_FROM_POINT
             x = p.x + math.cos(angle * i) * (R_POINT + 1)
             y = p.y + math.sin(angle * i) * (R_POINT + 1)
             draw_line(x, y)
+    for line in lines:
+        if line.q <= 0:
+            continue
+        for i in range(LINES_FROM_POINT + 1):
+            px = line.x1 - line.line_b * i / LINES_FROM_POINT
+            py = line.y1 + line.line_a * i / LINES_FROM_POINT
+            draw_line(px + line.normal_x, py + line.normal_y)
+            draw_line(px - line.normal_x, py - line.normal_y)
+        draw_line(line.x1 + line.normal_x, line.y1 + line.normal_y)
+        draw_line(line.x2 - line.normal_x, line.y2 - line.normal_y)
 
 
 def make_grid():
