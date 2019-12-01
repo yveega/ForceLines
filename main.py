@@ -110,7 +110,7 @@ class QPoint:
         global photo_im
         photo_im = ImageTk.PhotoImage(img)
         c.itemconfig(im, image=photo_im)
-        self.q = askquestion('Ввод данных', 'Введите заряд точки')
+        self.q = int(askquestion('Ввод данных', 'Введите заряд точки'))
         points.append(self)
 
     def distance(self, x, y):
