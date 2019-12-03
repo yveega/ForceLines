@@ -75,7 +75,7 @@ def draw_line(x, y):
             x_shift += x_plus
             y_shift += y_plus
         module = math.sqrt(x_shift ** 2 + y_shift ** 2)
-        if module < 0.0001:
+        if module < 0.001:
             break
         x_shift *= STEP / module
         y_shift *= STEP / module
