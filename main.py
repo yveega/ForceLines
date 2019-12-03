@@ -105,13 +105,16 @@ class QPoint:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        draw.ellipse([x - R_POINT, y - R_POINT, x + R_POINT, y + R_POINT],
+        self.paint()
+        self.q = int(askquestion('Ввод данных', 'Введите заряд точки'))
+        points.append(self)
+
+    def paint(self):
+        draw.ellipse([self.x - R_POINT, self.y - R_POINT, self.x + R_POINT, self.y + R_POINT],
                      (random.randint(0, 7) * 32, random.randint(0, 7) * 32, random.randint(0, 7) * 32))
         global photo_im
         photo_im = ImageTk.PhotoImage(img)
         c.itemconfig(im, image=photo_im)
-        self.q = int(askquestion('Ввод данных', 'Введите заряд точки'))
-        points.append(self)
 
     def distance(self, x, y):
         return math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2)
@@ -133,12 +136,16 @@ class QLine:
         self.length = math.sqrt(self.line_a ** 2 + self.line_b ** 2)
         self.normal_x = self.line_a * R_POINT / self.length
         self.normal_y = self.line_b * R_POINT / self.length
-        draw.line([x1, y1, x2, y2], (random.randint(0, 5) * 32, random.randint(0, 5) * 32, random.randint(0, 5) * 32), 5)
+        self.paint()
+        self.q = int(askquestion('Ввод данных', 'Введите заряд линии'))
+        lines.append(self)
+
+    def paint(self):
+        draw.line([self.x1, self.y1, self.x2, self.y2], (random.randint(0, 5) * 32, random.randint(0, 5) * 32, random.randint(0, 5) * 32),
+                  5)
         global photo_im
         photo_im = ImageTk.PhotoImage(img)
         c.itemconfig(im, image=photo_im)
-        self.q = int(askquestion('Ввод данных', 'Введите заряд линии'))
-        lines.append(self)
 
     def distance(self, x, y):
         k = math.sqrt(self.line_a ** 2 + self.line_b ** 2)
@@ -184,6 +191,36 @@ def draw_from_plus():
         draw_line(line.x2 - line.normal_x, line.y2 - line.normal_y)
 
 
+def change_tool():
+    global tool
+    if tool == 'point':
+        tool = 'line'
+    else:
+        tool = 'point'
+    b_tool.configure(text=tool)
+
+
+def clear_lines():
+    draw.rectangle([0, 0, W, H], (255, 255, 255), (255, 255, 255))
+    for i in points:
+        i.paint()
+    for i in lines:
+        i.paint()
+
+
+def delete_all():
+    draw.rectangle([0, 0, W, H], (255, 255, 255), (255, 255, 255))
+    global points, lines, photo_im
+    for i in points:
+        del i
+    points = []
+    for i in lines:
+        del i
+    lines = []
+    photo_im = ImageTk.PhotoImage(img)
+    c.itemconfig(im, image=photo_im)
+
+
 def make_grid():
     for j in range(1, W // GRID_SPACE):
         draw.line([j * GRID_SPACE, 0, j * GRID_SPACE, H], (0, 0, 0), 0)
@@ -196,11 +233,19 @@ draw = ImageDraw.Draw(img)
 
 main = Tk()
 photo_im = ImageTk.PhotoImage(img)
-b_draw = Button(main, text='Draw', width=15, height=2, font=FONT,
+button_frame = Frame(main)
+b_tool = Button(button_frame, text=tool, width=15, height=2, font=FONT, command=change_tool)
+b_draw = Button(button_frame, text='Draw', width=15, height=2, font=FONT,
                 command=draw_from_plus)
+b_clear = Button(button_frame, text='Очистить', width=15, height=2, font=FONT, command=clear_lines)
+b_delete = Button(button_frame, text='Удалить всё', width=15, height=2, font=FONT, command=delete_all)
 c = Canvas(main, width=W, height=H)
 c.bind('<Button-1>', click)
 im = c.create_image(0, 0, image=photo_im, anchor=NW)
-b_draw.pack()
+button_frame.pack()
+b_draw.pack(side=LEFT, padx=20)
+b_tool.pack(side=LEFT, padx=20)
+b_clear.pack(side=LEFT, padx=20)
+b_delete.pack(side=LEFT, padx=20)
 c.pack()
 main.mainloop()
