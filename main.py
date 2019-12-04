@@ -4,7 +4,7 @@ import math
 import random
 X1, Y1, Q1 = 250, 500, 100
 X2, Y2, Q2 = 750, 500, -200
-STEP = 10
+STEP = 5
 FONT = ('Comic Sans', 14, 'bold')
 R_POINT = 10
 W, H = 1000, 1000
@@ -12,6 +12,8 @@ points = []
 lines = []
 LINES_FROM_POINT = 10
 GRID_SPACE = 25
+LINE_WIDTH = 5
+ACCURACY = 20
 
 EPS = 0.0000001
 
@@ -75,7 +77,7 @@ def draw_line(x, y):
             x_shift += x_plus
             y_shift += y_plus
         module = math.sqrt(x_shift ** 2 + y_shift ** 2)
-        if module < 0.001:
+        if module < 0.0001:
             break
         x_shift *= STEP / module
         y_shift *= STEP / module
@@ -95,10 +97,15 @@ def click(event):
         QPoint(event.x, event.y)
     elif tool == 'line':
         buffer['x1'], buffer['y1'] = event.x, event.y
+        buffer['color'] = (random.randint(0, 5) * 32, random.randint(0, 5) * 32, random.randint(0, 5) * 32)
+        draw.ellipse([event.x - LINE_WIDTH, event.y - LINE_WIDTH, event.x + LINE_WIDTH, event.y + LINE_WIDTH], buffer['color'])
+        global photo_im
+        photo_im = ImageTk.PhotoImage(img)
+        c.itemconfig(im, image=photo_im)
         tool = 'line_wait'
     elif tool == 'line_wait':
         tool = 'line'
-        QLine(buffer['x1'], buffer['y1'], event.x, event.y)
+        QLine(buffer['x1'], buffer['y1'], event.x, event.y, buffer['color'])
 
 
 class QPoint:
@@ -124,25 +131,38 @@ class QPoint:
         return (x - self.x) * self.q / dist, (y - self.y) * self.q / dist
 
 
+class LinePoint(QPoint):
+    def __init__(self, x, y, q):
+        self.x = x
+        self.y = y
+        self.q = q
+
+
 class QLine:
-    def __init__(self, x1, y1, x2, y2):
+    def __init__(self, x1, y1, x2, y2, color):
         self.x1 = x1
         self.y1 = y1
         self.x2 = x2
         self.y2 = y2
+        self.color = color
         self.line_a = y2 - y1
         self.line_b = x1 - x2
         self.line_c = -(self.line_a * x1 + self.line_b * y1)
         self.length = math.sqrt(self.line_a ** 2 + self.line_b ** 2)
         self.normal_x = self.line_a * R_POINT / self.length
         self.normal_y = self.line_b * R_POINT / self.length
+        self.points = []
         self.paint()
         self.q = int(askquestion('Ввод данных', 'Введите заряд линии'))
         lines.append(self)
 
+    def set_points(self):
+        pass
+
     def paint(self):
-        draw.line([self.x1, self.y1, self.x2, self.y2], (random.randint(0, 5) * 32, random.randint(0, 5) * 32, random.randint(0, 5) * 32),
-                  5)
+        draw.line([self.x1, self.y1, self.x2, self.y2], self.color, LINE_WIDTH)
+        draw.ellipse([self.x1 - LINE_WIDTH, self.y1 - LINE_WIDTH, self.x1 + LINE_WIDTH, self.y1 + LINE_WIDTH], self.color)
+        draw.ellipse([self.x2 - LINE_WIDTH, self.y2 - LINE_WIDTH, self.x2 + LINE_WIDTH, self.y2 + LINE_WIDTH], self.color)
         global photo_im
         photo_im = ImageTk.PhotoImage(img)
         c.itemconfig(im, image=photo_im)
