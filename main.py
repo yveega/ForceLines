@@ -131,11 +131,15 @@ class QPoint:
         return (x - self.x) * self.q / dist, (y - self.y) * self.q / dist
 
 
-class LinePoint(QPoint):
+class LinePoint:
     def __init__(self, x, y, q):
         self.x = x
         self.y = y
         self.q = q
+
+    def force(self, x, y):
+        dist = math.sqrt((x - self.x) ** 2 + (y - self.y) ** 2) ** 3
+        return (x - self.x) * self.q / dist, (y - self.y) * self.q / dist
 
 
 class QLine:
@@ -154,10 +158,21 @@ class QLine:
         self.points = []
         self.paint()
         self.q = int(askquestion('Ввод данных', 'Введите заряд линии'))
+        self.set_points()
+        sum_q = 0
+        for i in self.points:
+            sum_q += i.q
+        print(sum_q)
         lines.append(self)
 
     def set_points(self):
-        pass
+        sin = (self.y2 - self.y1) / self.length
+        cos = (self.x2 - self.x1) / self.length
+        qp = self.q / (self.length // ACCURACY + 1)
+        for i in range(0, int(math.ceil(self.length)), ACCURACY):
+            self.points.append(LinePoint(self.x1 + cos * i, self.y1 + sin * i, qp))
+        # if round(self.length / ACCURACY) == self.length // ACCURACY + 1:
+        #     self.points.append(LinePoint(self.x2, self.y2, qp))
 
     def paint(self):
         draw.line([self.x1, self.y1, self.x2, self.y2], self.color, LINE_WIDTH)
@@ -172,22 +187,13 @@ class QLine:
         return abs(self.line_a * x + self.line_b * y + self.line_c) / k
 
     def force(self, x, y):
-        module1 = math.sqrt((x - self.x1) ** 2 + (y - self.y1) ** 2)
-        module2 = math.sqrt((x - self.x2) ** 2 + (y - self.y2) ** 2)
-        bis_b = -((x - self.x1) / module1 + (x - self.x2) / module2)
-        bis_a = (y - self.y1) / module1 + (y - self.y2) / module2
-        bis_c = - (bis_a * x + bis_b * y)
-        k = bis_a * self.line_b - bis_b * self.line_a
-        if abs(k) < EPS:
-            gx = math.sqrt((self.x1 ** 2 + self.x2 ** 2) / 2)
-            gy = math.sqrt((self.y1 ** 2 + self.y2 ** 2) / 2)
-        else:
-            gx = -(bis_c * self.line_b - bis_b * self.line_c) / k
-            gy = -(bis_a * self.line_c - bis_c * self.line_a) / k
-        # draw.ellipse([gx - 5, gy - 5, gx + 5, gy + 5], (255, 0, 0))
-        # draw.line([x, y, gx, gy], (0, 255, 0))
-        dist = math.sqrt((x - gx) ** 2 + (y - gy) ** 2) ** 3
-        return (x - gx) * self.q / dist, (y - gy) * self.q / dist
+        fx_all = 0
+        fy_all = 0
+        for p in self.points:
+            fx_all_plus, fy_all_plus = p.force(x, y)
+            fx_all += fx_all_plus
+            fy_all += fy_all_plus
+        return fx_all, fy_all
 
 
 def draw_from_plus():
