@@ -10,7 +10,7 @@ R_POINT = 10
 W, H = 1000, 1000
 points = []
 lines = []
-LINES_FROM_POINT = 10
+LINES_FROM_POINT = 8
 GRID_SPACE = 25
 LINE_WIDTH = 7
 ACCURACY = 20
@@ -42,7 +42,7 @@ def end_asking(event):
 
 
 def askquestion(title, question):
-    global r_ask, en
+    global r_ask, en, res
     r_ask = Toplevel(main)
     r_ask.title(title)
     l_que = Label(r_ask, text=question, fg='blue', font=FONT)
@@ -51,7 +51,9 @@ def askquestion(title, question):
     en.pack(padx=20, pady=10)
     en.bind('<Return>', end_asking)
     main.wait_window(r_ask)
-    return res
+    ans = res
+    del res, r_ask, en
+    return ans
 
 
 def update():
@@ -373,17 +375,57 @@ def make_grid():
     draw_objects()
 
 
+def set_settings():
+    global LINES_FROM_POINT, ARR_SIZE, ARR_SPACE, ACCURACY
+    LINES_FROM_POINT = s_lines_from.get()
+    ARR_SIZE = s_arr_size.get()
+    ARR_SPACE = s_arr_space.get()
+    ACCURACY = 100 // s_accuracy.get()
+    w_settings.destroy()
+
+
+def settings():
+    global w_settings, s_lines_from, s_arr_size, s_arr_space, s_accuracy
+    w_settings = Toplevel(main)
+    w_settings.title('Параметры рисования линий')
+    l_lines_from = Label(w_settings, text='Минимальное количество линий от точки', font=FONT, fg='darkgreen')
+    s_lines_from = Scale(w_settings, orient=HORIZONTAL, from_=4, to=15, resolution=1, length=200)
+    s_lines_from.set(LINES_FROM_POINT)
+    l_arr_size = Label(w_settings, text='Размер стрелок', font=FONT, fg='darkgreen')
+    s_arr_size = Scale(w_settings, orient=HORIZONTAL, from_=10, to=25, resolution=1, length=200)
+    s_arr_size.set(ARR_SIZE)
+    l_arr_space = Label(w_settings, text='Промежуток между стрелками', font=FONT, fg='darkgreen')
+    s_arr_space = Scale(w_settings, orient=HORIZONTAL, from_=60, to=250, resolution=10, length=200)
+    s_arr_space.set(ARR_SPACE)
+    l_accuracy = Label(w_settings, text='Точность подсчёта силы для отрезка', font=FONT, fg='darkgreen')
+    s_accuracy = Scale(w_settings, orient=HORIZONTAL, from_=3, to=50, resolution=1, length=200)
+    s_accuracy.set(100 // ACCURACY)
+    b_ok = Button(w_settings, text='OK', font=FONT, bg='orange', activebackground='orange', command=set_settings)
+    l_lines_from.pack()
+    s_lines_from.pack()
+    l_arr_size.pack()
+    s_arr_size.pack()
+    l_arr_space.pack()
+    s_arr_space.pack()
+    l_accuracy.pack()
+    s_accuracy.pack()
+    b_ok.pack()
+    main.wait_window(w_settings)
+
+
 img = Image.new("RGB", (W, H), (255, 255, 255))
 draw = ImageDraw.Draw(img)
 
 main = Tk()
+main.title('Force Lines')
 photo_im = ImageTk.PhotoImage(img)
 button_frame_top = Frame(main)
 button_frame_bottom = Frame(main)
 b_point = Button(button_frame_bottom, text='Точка', font=FONT, command=set_tool_point)
-b_line = Button(button_frame_bottom, text='Линия', font=FONT, command=set_tool_line)
+b_line = Button(button_frame_bottom, text='Отрезок', font=FONT, command=set_tool_line)
 b_draw = Button(button_frame_top, text='НАРИСОВАТЬ', width=15, height=1, font=FONT, fg='orange', activeforeground='orange',
                 command=draw_from_plus)
+b_settings = Button(button_frame_bottom, text='Параметры', font=FONT, command=settings)
 b_clear = Button(button_frame_top, text='Очистить', width=15, height=1, font=FONT, command=clear_lines)
 b_delete_all = Button(button_frame_top, text='Удалить всё', width=15, height=1, font=FONT, command=delete_all)
 c = Canvas(main, width=W, height=H)
@@ -398,6 +440,7 @@ button_frame_bottom.pack()
 b_draw.pack(side=LEFT, padx=10)
 b_point.pack(side=LEFT, padx=10)
 b_line.pack(side=LEFT, padx=10)
+b_settings.pack(side=LEFT, padx=10)
 b_clear.pack(side=LEFT, padx=10)
 b_delete_all.pack(side=LEFT, padx=10)
 c.pack()
