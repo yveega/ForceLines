@@ -82,10 +82,14 @@ def draw_line(x, y, minus=False):
         for i in points:
             if i.distance(x1, y1) < STEP:
                 end = True
-                if x1 > i.x:
-                    i.ends.append(math.atan((y1 - i.y) / (x1 - i.x)) % (2 * math.pi))
+                if x1 == i.x:
+                    angle = math.pi / 2
                 else:
-                    i.ends.append((math.atan((y1 - i.y) / (x1 - i.x)) + math.pi) % (2 * math.pi))
+                    angle = math.atan((y1 - i.y) / (x1 - i.x))
+                if x1 > i.x:
+                    i.ends.append(angle % (2 * math.pi))
+                else:
+                    i.ends.append((angle + math.pi) % (2 * math.pi))
                 break
         for i in lines:
             if i.distance(x1, y1) < LINE_WIDTH - 1 and \
@@ -356,6 +360,9 @@ def clear_lines():
 
 def delete_all():
     draw.rectangle([0, 0, W, H], (255, 255, 255), (255, 255, 255))
+    global tool
+    if tool == 'line1':
+        tool = 'line'
     global points, lines
     for i in points:
         del i
@@ -401,14 +408,14 @@ def settings():
     s_accuracy = Scale(w_settings, orient=HORIZONTAL, from_=3, to=50, resolution=1, length=200)
     s_accuracy.set(100 // ACCURACY)
     b_ok = Button(w_settings, text='OK', font=FONT, bg='orange', activebackground='orange', command=set_settings)
-    l_lines_from.pack()
-    s_lines_from.pack()
-    l_arr_size.pack()
-    s_arr_size.pack()
-    l_arr_space.pack()
-    s_arr_space.pack()
-    l_accuracy.pack()
-    s_accuracy.pack()
+    l_lines_from.pack(padx=20)
+    s_lines_from.pack(padx=20)
+    l_arr_size.pack(padx=20)
+    s_arr_size.pack(padx=20)
+    l_arr_space.pack(padx=20)
+    s_arr_space.pack(padx=20)
+    l_accuracy.pack(padx=20)
+    s_accuracy.pack(padx=20)
     b_ok.pack()
     main.wait_window(w_settings)
 
