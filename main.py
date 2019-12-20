@@ -2,8 +2,6 @@ from tkinter import *
 from PIL import Image, ImageDraw, ImageTk
 import math
 import random
-X1, Y1, Q1 = 250, 500, 100
-X2, Y2, Q2 = 750, 500, -200
 STEP = 5
 FONT = ('Comic Sans', 14, 'bold')
 R_POINT = 10
@@ -172,6 +170,7 @@ class QPoint:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        self.color = (random.randint(0, 7) * 32, random.randint(0, 7) * 32, random.randint(0, 7) * 32)
         self.paint()
         self.ends = []
         self.q = int(askquestion('Ввод данных', 'Введите заряд точки'))
@@ -179,8 +178,7 @@ class QPoint:
 
     def paint(self):
         self.ends = []
-        draw.ellipse([self.x - R_POINT, self.y - R_POINT, self.x + R_POINT, self.y + R_POINT],
-                     (random.randint(0, 7) * 32, random.randint(0, 7) * 32, random.randint(0, 7) * 32))
+        draw.ellipse([self.x - R_POINT, self.y - R_POINT, self.x + R_POINT, self.y + R_POINT], self.color)
         update()
 
     def distance(self, x, y):
@@ -309,6 +307,7 @@ class QLine:
 
 
 def draw_from_plus():
+    clear_lines()
     for p in points:
         if p.q <= 0:
             continue
@@ -383,8 +382,9 @@ def make_grid():
 
 
 def set_settings():
-    global LINES_FROM_POINT, ARR_SIZE, ARR_SPACE, ACCURACY
+    global LINES_FROM_POINT, ARR_SIZE, ARR_SPACE, ACCURACY, STEP
     LINES_FROM_POINT = s_lines_from.get()
+    STEP = s_step.get()
     ARR_SIZE = s_arr_size.get()
     ARR_SPACE = s_arr_space.get()
     ACCURACY = 100 // s_accuracy.get()
@@ -392,24 +392,29 @@ def set_settings():
 
 
 def settings():
-    global w_settings, s_lines_from, s_arr_size, s_arr_space, s_accuracy
+    global w_settings, s_lines_from, s_step, s_arr_size, s_arr_space, s_accuracy
     w_settings = Toplevel(main)
     w_settings.title('Параметры рисования линий')
     l_lines_from = Label(w_settings, text='Минимальное количество линий от точки', font=FONT, fg='darkgreen')
-    s_lines_from = Scale(w_settings, orient=HORIZONTAL, from_=4, to=15, resolution=1, length=200)
+    s_lines_from = Scale(w_settings, orient=HORIZONTAL, from_=4, to=15, resolution=1, length=300)
     s_lines_from.set(LINES_FROM_POINT)
+    l_step = Label(w_settings, text='Шаг рисования линий', font=FONT, fg='darkgreen')
+    s_step = Scale(w_settings, orient=HORIZONTAL, from_=1, to=10, resolution=1, length=300)
+    s_step.set(STEP)
     l_arr_size = Label(w_settings, text='Размер стрелок', font=FONT, fg='darkgreen')
-    s_arr_size = Scale(w_settings, orient=HORIZONTAL, from_=10, to=25, resolution=1, length=200)
+    s_arr_size = Scale(w_settings, orient=HORIZONTAL, from_=10, to=25, resolution=1, length=300)
     s_arr_size.set(ARR_SIZE)
     l_arr_space = Label(w_settings, text='Промежуток между стрелками', font=FONT, fg='darkgreen')
-    s_arr_space = Scale(w_settings, orient=HORIZONTAL, from_=60, to=250, resolution=10, length=200)
+    s_arr_space = Scale(w_settings, orient=HORIZONTAL, from_=60, to=250, resolution=10, length=300)
     s_arr_space.set(ARR_SPACE)
     l_accuracy = Label(w_settings, text='Точность подсчёта силы для отрезка', font=FONT, fg='darkgreen')
-    s_accuracy = Scale(w_settings, orient=HORIZONTAL, from_=3, to=50, resolution=1, length=200)
+    s_accuracy = Scale(w_settings, orient=HORIZONTAL, from_=3, to=50, resolution=1, length=300)
     s_accuracy.set(100 // ACCURACY)
     b_ok = Button(w_settings, text='OK', font=FONT, bg='orange', activebackground='orange', command=set_settings)
     l_lines_from.pack(padx=20)
     s_lines_from.pack(padx=20)
+    l_step.pack(padx=20)
+    s_step.pack(padx=20)
     l_arr_size.pack(padx=20)
     s_arr_size.pack(padx=20)
     l_arr_space.pack(padx=20)
