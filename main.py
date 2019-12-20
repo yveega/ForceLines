@@ -149,6 +149,43 @@ def draw_objects():
         i.paint()
 
 
+def delete_obj(obj):
+    if type(obj) == QPoint:
+        del points[points.index(obj)]
+    else:
+        del lines[lines.index(obj)]
+    clear_lines()
+    w_config.destroy()
+
+
+def config_obj(obj):
+    obj.q = int(en_q.get())
+    if type(obj) == QLine:
+        obj.set_points()
+    clear_lines()
+    w_config.destroy()
+
+
+def delete_config(obj):
+    global w_config, en_q
+    w_config = Toplevel(main)
+    if type(obj) == QPoint:
+        w_config.title('Изменить/удалить точку')
+        l_q = Label(w_config, text='Заряд точки', font=FONT)
+    else:
+        w_config.title('Изменить/удалить отрезок')
+        l_q = Label(w_config, text='Заряд отрезка', font=FONT)
+    en_q = Entry(w_config, text=str(obj.q), width=20)
+    b_delete = Button(w_config, text='Удалить', font=FONT, bg='red', activebackground='#ffaaaa',
+                      command=lambda: delete_obj(obj))
+    b_config = Button(w_config, text='Изменить', font=FONT, command=lambda: config_obj(obj))
+    l_q.pack(padx=20, side=TOP)
+    en_q.pack(padx=20, side=TOP)
+    b_delete.pack(padx=20, side=LEFT)
+    b_config.pack(padx=20, side=LEFT)
+    main.wait_window(w_config)
+
+
 def click(event):
     global tool
     if tool == 'point':
@@ -164,6 +201,18 @@ def click(event):
     elif tool == 'line_wait':
         tool = 'line'
         QLine(buffer['x1'], buffer['y1'], event.x, event.y, buffer['color'])
+    elif tool == 'delconf':
+        for p in points:
+            if p.distance(event.x, event.y) <= R_POINT:
+                delete_config(p)
+                return
+        for line in lines:
+            if (line.distance(event.x, event.y) <= LINE_WIDTH and min(line.x1, line.x2) <= event.x <= max(line.x1, line.x2)
+                    and min(line.y1, line.y2) <= event.y <= max(line.y1, line.y2)) or \
+                    (line.x1 - event.x) ** 2 + (line.y1 - event.y) ** 2 <= LINE_WIDTH ** 2 or \
+                    (line.x2 - event.x) ** 2 + (line.y2 - event.y) ** 2 <= LINE_WIDTH ** 2:
+                delete_config(line)
+                return
 
 
 class QPoint:
@@ -326,9 +375,6 @@ def draw_from_plus():
     for line in lines:
         if line.q >= 0:
             continue
-        print(line.ends1)
-        print(line.ends2)
-        print(line.start_points())
         for i in line.start_points():
             draw_line(i[0], i[1], True)
     draw_objects()
@@ -340,6 +386,8 @@ def set_tool_point():
     b_point['activebackground'] = 'lightblue'
     b_line['bg'] = 'gray60'
     b_line['activebackground'] = 'gray60'
+    b_delete_config['bg'] = 'gray60'
+    b_delete_config['activebackground'] = 'gray60'
     tool = 'point'
 
 
@@ -349,12 +397,26 @@ def set_tool_line():
     b_line['activebackground'] = 'lightblue'
     b_point['bg'] = 'gray60'
     b_point['activebackground'] = 'gray60'
+    b_delete_config['bg'] = 'gray60'
+    b_delete_config['activebackground'] = 'gray60'
     tool = 'line'
+
+
+def set_tool_delconf():
+    global tool
+    b_line['bg'] = 'gray60'
+    b_line['activebackground'] = 'gray60'
+    b_delete_config['bg'] = 'lightblue'
+    b_delete_config['activebackground'] = 'lightblue'
+    b_point['bg'] = 'gray60'
+    b_point['activebackground'] = 'gray60'
+    tool = 'delconf'
 
 
 def clear_lines():
     draw.rectangle([0, 0, W, H], (255, 255, 255), (255, 255, 255))
     draw_objects()
+    update()
 
 
 def delete_all():
@@ -440,18 +502,22 @@ b_draw = Button(button_frame_top, text='НАРИСОВАТЬ', width=15, height=
 b_settings = Button(button_frame_bottom, text='Параметры', font=FONT, command=settings)
 b_clear = Button(button_frame_top, text='Очистить', width=15, height=1, font=FONT, command=clear_lines)
 b_delete_all = Button(button_frame_top, text='Удалить всё', width=15, height=1, font=FONT, command=delete_all)
+b_delete_config = Button(button_frame_bottom, text='Удалить/изменить', font=FONT, command=set_tool_delconf)
 c = Canvas(main, width=W, height=H)
 c.bind('<Button-1>', click)
 b_point['bg'] = 'lightblue'
 b_point['activebackground'] = 'lightblue'
 b_line['bg'] = 'gray60'
 b_line['activebackground'] = 'gray60'
+b_delete_config['bg'] = 'gray60'
+b_delete_config['activebackground'] = 'gray60'
 im = c.create_image(0, 0, image=photo_im, anchor=NW)
 button_frame_top.pack()
 button_frame_bottom.pack()
 b_draw.pack(side=LEFT, padx=10)
 b_point.pack(side=LEFT, padx=10)
 b_line.pack(side=LEFT, padx=10)
+b_delete_config.pack(side=LEFT, padx=10)
 b_settings.pack(side=LEFT, padx=10)
 b_clear.pack(side=LEFT, padx=10)
 b_delete_all.pack(side=LEFT, padx=10)
